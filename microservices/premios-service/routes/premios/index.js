@@ -46,10 +46,14 @@ router.get("/:id", async (req, res) => {
 // ruta para buscar un premio por su id dee campeon 
 router.get("/campeon/:campeonId", async (req, res) => {
   const { campeonId } = req.params;
-  const premiosPorCampeon = await premios.findByChampionId(campeonId);
+
+  // Si campeonId contiene una lista de IDs separados por coma, dividimos la cadena en una matriz
+  const ids = campeonId
+
+  const premiosPorCampeon = await premios.findByChampionIds(ids);
 
   if (!premiosPorCampeon || premiosPorCampeon.length === 0) {
-    return res.status(404).send(response(`No se encontró ningun registro con el id_campeon ${campeonId}`, true));
+    return res.status(404).send(response(`No se encontró ningún registro con los IDs de campeón proporcionados: ${campeonId}`, true));
   }
 
   logger("Get by campeonId: Premio data");

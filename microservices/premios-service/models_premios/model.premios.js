@@ -40,23 +40,39 @@ class PremiosModel {
     return buscarPremio;
   }
 
-  async findByChampionId(championId) {
-    const buscarPremio = new Promise((resolve, reject) => {
-      this.db.all(
-        "SELECT id, id_campeon, anio_campeonato, lugar, categoria_ganada, pais_competencia, premio, puntaje FROM campeonatos WHERE id_campeon = ?",
-        [championId],
-        (err, rows) => {
-          if (err) {
-            reject(err);
-          } else {
-            resolve(rows);
+  async  findByChampionIds(championIds) {
+    const ids = championIds.split(',');
+  
+    const promesas = ids.map((id) => {
+      return new Promise((resolve, reject) => {
+       this.db.all(
+          "SELECT id, id_campeon, anio_campeonato, lugar, categoria_ganada, pais_competencia, premio, puntaje FROM campeonatos WHERE id_campeon = ?",
+          [id],
+          (err, rows) => {
+            if (err) {
+              reject(err);
+            } else {
+              resolve(rows);
+            }
           }
-        }
-      );
+        );
+      });
     });
   
-    return buscarPremio;
+    const resultados = await Promise.all(promesas);
+  
+    // Concatenamos los resultados de cada consulta en un solo array
+    const premiosPorCampeon = [].concat(...resultados);
+  
+    if (!premiosPorCampeon || premiosPorCampeon.length === 0) {
+      return null;
+    }
+  
+    return premiosPorCampeon;
   }
+  
+  
+  
 // buscar por un año especifico
   async findByAnio(anio) {
     const buscarPremio = new Promise((resolve, reject) => {
@@ -172,7 +188,7 @@ async findByPremio(premio) {
   return buscarPremios;
 }
 
-//Funcion para buscar premio por ranfo de $$
+//Funcion para buscar premio por rango de $$
 async findByRangoPremio(min, max) {
   const buscarPremios = new Promise((resolve, reject) => {
     this.db.all(
