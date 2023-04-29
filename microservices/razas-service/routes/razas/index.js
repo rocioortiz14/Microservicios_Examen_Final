@@ -1,45 +1,127 @@
-// Importamos el paquete express
 const express = require("express");
-
-// Creamos un objeto Router
 const router = express.Router();
 
-// Inportamos el Path de csvtojson
+const ModeloRazas = require("../../models_razas/models.raza");
+const razas = new ModeloRazas();
 const path = require('path');
-const csvPath = '../../data/raza_info.csv';
-const directoryPath = path.join(__dirname, csvPath);
-console.log(directoryPath);
-const csvtojson = require('csvtojson');
+const parseToJson = require('../../src/parser');
+const csvFilePath = path.join(__dirname, '../../data/raza_info.csv');
+const logger = (message) => console.log(`From Razas Service: ${message}`);
 
-const LanguageArray = [];
+const response = (data = [], err = false) => {
+  const length = err === false ? data.length : 0;
+  return {
+    service: "razas",
+    architecture: "microservices",
+    length: length,
+    data: data,
+  };
+};
 
-csvtojson({
-    noheader: true,
-    headers: ['id','raza','color_de_pelo','tamanio_de_pelo'
-    ,'pais_de_origen','expectativa_de_vida','tipo','acreditado']
-  })
-  .fromFile(directoryPath)
-  .then((jsonObject) => {
+router.get("/", async (req, res) => {
+  try {
+    const listaRazas = await razas.findAll();
+    logger("Get all: Razas data");
+    return res.send(response(listaRazas));
+  } catch (err) {
+    logger(`Error retrieving all: ${err.message}`);
+    return res.send(response([], true));
+  }
+});
 
-    for (let items in jsonObject) {
-      jsonObject[items]['raza'] = jsonObject[items]['raza'].split(";");
-
-      LanguageArray.push(jsonObject[items]);
+router.get("/:id", async (req, res) => {
+  const { id } = req.params;
+  try {
+    const razaFound = await razas.findById(id);
+    if (!razaFound) {
+      return res.send(response(`No se encontró ningún registro con el id ${id}`));
     }
-  });
+    logger("Get by id: Raza data");
+    return res.send(response(razaFound));
+  } catch (err) {
+    logger(`Error retrieving by id: ${err.message}`);
+    return res.send(response([], true));
+  }
+});
 
-  // Creamos una función logger que muestra un mensaje en consola
-  const logger = (message) => console.log(`Languages Service: ${message}`);
 
-  router.get("/", (req, res) => {
-    const response = {
-      // crea una respuesta con información sobre los libros
-      service: "razas",
-      length: LanguageArray.length,
-      data: LanguageArray,
-    };
-    logger("Get razas data"); // registra un mensaje en los registros
-    return res.json(response); // devuelve la respuesta al cliente
-  }); 
 
-  module.exports = router;
+router.get('/color/:colorDePelo', async (req, res) => {
+  const colorDePelo = req.params.colorDePelo;
+  try {
+    const data = await parseToJson(csvFilePath);
+    const filteredData = data.filter(raza => raza.color_de_pelo.some(pelo => pelo.includes(colorDePelo)));
+    res.json(filteredData);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Error al procesar el archivo CSV');
+  }
+});
+
+
+
+router.get('/nombre/:name', async (req, res) => {
+  const name = req.params.name;
+  try {
+    const data = await parseToJson(csvFilePath);
+    const filteredData = data.filter(raza => raza.raza.toLowerCase().includes(name.toLowerCase()));
+    res.json(filteredData);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Error al procesar el archivo CSV');
+  }
+});
+
+router.get('/tipo/:tipo', async (req, res) => {
+  const tipo = req.params.tipo;
+  try {
+    const data = await parseToJson(csvFilePath);
+    const filteredData = data.filter(raza => raza.tipo.includes(tipo));
+    res.json(filteredData);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Error al procesar el archivo CSV');
+  }
+});
+
+
+router.get('/pais/:paisOrigen', async (req, res) => {
+  const pais = req.params.paisOrigen;
+  try {
+    const data = await parseToJson(csvFilePath);
+    const filteredData = data.filter(raza => raza.pais_de_origen === pais);
+    res.json(filteredData);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Error al procesar el archivo CSV');
+  }
+});
+
+
+router.get('/expectativa-vida/:edad', async (req, res) => {
+  const edad = req.params.edad;
+  try {
+    const data = await parseToJson(csvFilePath);
+    const filteredData = data.filter(raza => raza.expectativa_de_vida === edad);
+    res.json(filteredData);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Error al procesar el archivo CSV');
+  }
+});
+
+
+
+router.get('/acreditadas/:status', async (req, res) => {
+  const status = req.params.status;
+  try {
+    const data = await parseToJson(csvFilePath);
+    const filteredData = data.filter(raza => raza.acreditado === status);
+    res.json(filteredData);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Error al procesar el archivo CSV');
+  }
+});
+
+module.exports = router;

@@ -1,28 +1,113 @@
-// Importamos el paquete express
 const express = require("express");
-
-// Creamos un objeto Router
 const router = express.Router();
+const PerrosModel = require("../../models_perros/models.perros");
 
-// Importamos el módulo data-Library que contiene los datos de los autores
-const data = require("../../data/datos_perro");
+// Instancia el modelo de la data Perros
+const perros = new PerrosModel();
 
-// Creamos una función logger que muestra un mensaje en consola
-const logger = (message) => console.log(`Perros Service: ${message}`);
+// Muestra en consola el recurso solicitado
+const logger = (message) => console.log(`From Perros Services: ${message}`);
 
-// Creamos la ruta para obtener todos los perros
+//Define una plantilla para las respuestas
+const response = (data = [], err = false) => {
+  const length = err === false ? data.length : 0;
+  return {
+    service: "Perros",
+    architecture: "microservices",
+    length: length,
+    data: data,
+  };
+};
+
 router.get("/", (req, res) => {
+  const perrosList = perros.findAll();
+  logger("Get all Perros data");
+  return res.send(response(perrosList));
+});
+
+router.get("/:id", (req, res) => {
+  const { id } = req.params;
   
-    // Creamos un objeto de respuesta con los datos del archivo JSON
-    const response = {
-      service: "perros",
-      data: data,
-    };
-  
-    // Enviamos la respuesta
-    return res.json(response);
+  const perroFound = perros.findById(id);
+
+  // Si no existe un registro con el id, responderá con un not found
+  if (!perroFound) {
+    return res
+      .status(404)
+      .send(response(`No se encontró ningun registro con el id ${id}`, true));
+  }
+
+  logger("Get by id: Perro data");
+  return res.send(response(perroFound));
+});
+
+
+// Endpoint para buscar perros por peso mínimo o máximo
+router.get('/buscar/:tipo/:peso', (req, res) => {
+  const { tipo, peso } = req.params;
+
+  let perrosList = perros.findAll();
+
+  if (tipo === 'min') {
+    perrosList = perrosList.filter((perro) => perro.peso >= peso);
+  } else if (tipo === 'max') {
+    perrosList = perrosList.filter((perro) => perro.peso <= peso);
+  } else {
+    return res
+      .status(400)
+      .send(
+        response(
+          `El tipo de búsqueda '${tipo}' no es válido. Use 'min' o 'max'.`,
+          true
+        )
+      );
+  }
+
+  logger(`Get Perros data by peso ${tipo}: ${peso}`);
+  return res.send(response(perrosList));
+});
+
+//endpoint buscar por pais de origen del dueño 
+router.get('/buscar-por-pais/:pais', (req, res) => {
+  const { pais } = req.params;
+
+  let perrosList = perros.findByPaisOrigen(pais);
+
+  perrosList = perrosList.filter((perro) => {
+    const paisDueno = perro.pais_dueno;
+    const paisOrigenDueno = perro.pais_origen_dueno;
+
+    if (paisDueno === pais || paisOrigenDueno === pais) {
+      return true;
+    }
+    return false;
   });
 
+  logger(`Get Perros data by pais: ${pais}`);
+  return res.send(response(perrosList));
+});
 
 
+
+// endpoint para buscar por nombre del perro 
+
+router.get('/buscar-por-nombre/:nombre', (req, res) => {
+  const { nombre } = req.params;
+
+  const perrosList = perros.findByNombre(nombre);
+
+  logger(`Get Perros data by nombre: ${nombre}`);
+  return res.send(response(perrosList));
+});
+
+// endpoint para buscar por nombre del dueno 
+
+router.get('/buscar-por-dueno/:nombre', (req, res) => {
+  const { nombre } = req.params;
+
+  const perrosList = perros.findByNombre(nombre);
+
+  logger(`Get Perros data by nombre: ${nombre}`);
+  return res.send(response(perrosList));
+});
 module.exports = router;
