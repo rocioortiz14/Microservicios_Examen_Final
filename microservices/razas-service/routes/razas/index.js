@@ -29,7 +29,7 @@ router.get("/", async (req, res) => {
   }
 });
 
-router.get("/:id", async (req, res) => {
+/*router.get("/:id", async (req, res) => {
   const { id } = req.params;
   try {
     const razaFound = await razas.findById(id);
@@ -42,7 +42,7 @@ router.get("/:id", async (req, res) => {
     logger(`Error retrieving by id: ${err.message}`);
     return res.send(response([], true));
   }
-});
+});*/
 
 
 
@@ -135,6 +135,48 @@ router.get('/tamanio/:tamPelo', async (req, res) => {
     res.status(500).send('Error al procesar el archivo CSV');
   }
 });
+
+
+router.get("/:id", async (req, res) => {
+  const { id } = req.params;
+  try {
+    const razaFound = await razas.findById(id);
+    if (!razaFound) {
+      return res.send(response(`No se encontró ningún registro con el id ${id}`));
+    }
+    const responsePerros = await fetch("http://perros:3000/api/v2/perros");
+    const perros = await responsePerros.json();
+    const perrosFiltrados = perros.filter((perro) => perro.razaId === id);
+    logger("Get by id: Raza y perros data");
+    return res.send(response({ raza: razaFound, perros: perrosFiltrados }));
+  } catch (err) {
+    logger(`Error retrieving by id: ${err.message}`);
+    return res.send(response([], true));
+  }
+});
+
+/*router.get("/:id", async (req, res) => {
+  const { id } = req.params;
+  try {
+    const razaFound = await razas.findById(id);
+    if (!razaFound) {
+      return res.send(response(`No se encontró ningún registro con el id ${id}`));
+    }
+    const responsePerros = await fetch("http://perros:3000/api/v2/perros");
+    const perros = await responsePerros.json();
+    const perrosFiltrados = perros.filter((perro) => perro.razaId === id);
+
+    const responseRazas = await fetch("http://razas:5000/api/v2/razas");
+    const razas = await responseRazas.json();
+    const razaInfo = razas.find((raza) => raza.id === id);
+
+    logger("Get by id: Raza, perros y raza info data");
+    return res.send(response({ raza: razaFound, perros: perrosFiltrados, razaInfo: razaInfo }));
+  } catch (err) {
+    logger(`Error retrieving by id: ${err.message}`);
+    return res.send(response([], true));
+  }
+});*/
 
 
 module.exports = router;
