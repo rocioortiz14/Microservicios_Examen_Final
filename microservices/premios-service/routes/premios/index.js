@@ -188,32 +188,39 @@ router.get("/RangoPremio/:min/:max", async (req, res) => {
 });
 
 
-// Endpoint para buscar por puntaje de estrellas
-router.get("/puntaje/:puntaje", async (req, res) => {
-  const { puntaje } = req.params;
 
-  // Validar que el puntaje sea un número entero
-  if (!Number.isInteger(parseInt(puntaje))) {
-    return res
-      .status(400)
-      .send(response("El puntaje debe ser un número entero", true));
+
+router.get("/raza/:paisCompetencia", async (req, res) => {
+  const { paisCompetencia } = req.params;
+  try {
+    // Buscar la información de la raza según el país de competencia
+    const responseRazas = await fetch(`http://razas:5000/api/v2/razas?pais_competencia=${paisCompetencia}`);
+    const razasData = await responseRazas.json();
+
+    if (razasData.length === 0) {
+      return res.status(404).send(response(`No se encontró ninguna raza registrada en el país ${paisCompetencia}`, true));
+    }
+
+    // Obtener la información de los perros de cada raza
+    const perrosData = [];
+    for (let i = 0; i < razasData.length; i++) {
+      const responsePerros = await fetch(`http://perros:3000/api/v2/perros?raza_id=${razasData[i].id}`);
+      const perros = await responsePerros.json();
+      perrosData.push({ raza: razasData[i], perros });
+    }
+
+    logger(`Get by pais_competencia: ${paisCompetencia} - Raza y perros data`);
+    return res.send(response(perrosData));
+  } catch (err) {
+    logger(`Error retrieving by pais_competencia: ${err.message}`);
+    return res.send(response([], true));
   }
-
-  // Buscar los registros que tengan el puntaje especificado
-  const premiosFound = await premios.findByPuntaje(parseInt(puntaje));
-
-  if (premiosFound.length === 0) {
-    return res
-      .status(404)
-      .send(response(`No se encontró ningún registro con el puntaje ${puntaje}`, true));
-  }
-
-  logger("Get by puntaje: Premio data");
-  return res.send(response(premiosFound));
 });
 
+
 // Endpoint para buscar por número de estrellas en el campo "puntaje"
-router.get("/estrellas/:estrellas", async (req, res) => {
+
+/*router.get("/estrellas/:estrellas", async (req, res) => {
   const { estrellas } = req.params;
   const premiosFound = await premios.findByEstrellas(estrellas);
 
@@ -225,7 +232,7 @@ router.get("/estrellas/:estrellas", async (req, res) => {
 
   logger(`Get by estrellas: ${estrellas} - Premio data`);
   return res.send(response(premiosFound));
-});
+});*/
 
 
 
