@@ -43,9 +43,8 @@ router.get("/:id", (req, res) => {
 
 
 // Endpoint para buscar perros por peso mínimo o máximo
-router.get('/buscar/:tipo/:peso', (req, res) => {
-  const { tipo, peso } = req.params;
-
+router.get('/buscar/:tipo/:peso/:pais', (req, res) => {
+  const { tipo, peso, pais } = req.params;
   let perrosList = perros.findAll();
 
   if (tipo === 'min') {
@@ -61,10 +60,21 @@ router.get('/buscar/:tipo/:peso', (req, res) => {
           true
         )
       );
+      
   }
+  
+  perrosList = perrosList.filter((perro) => {
+    const paisDueno = perro.pais_dueno;
+    const paisOrigenDueno = perro.pais_origen_dueno;
 
-  logger(`Get Perros data by peso ${tipo}: ${peso}`);
+    if (paisDueno === pais || paisOrigenDueno === pais) {
+      return true;
+    }
+    return false;
+  });
+    logger(`Get Perros data by pais: ${pais}`);
   return res.send(response(perrosList));
+  
 });
 
 //endpoint buscar por pais de origen del dueño 
@@ -112,29 +122,23 @@ router.get('/buscar-por-dueno/:nombre', (req, res) => {
 });
 
 
-router.get("/premios/:id", async (req, res) => {
-  const id = req.params.id;
-  
-  try {
-    const responsePerro = await fetch(`http://perros:3000/api/v2/perros/${id}`);
-    const perro = await responsePerro.json();
+router.get("/campeon/:campeonId", async (req, res) => {
+  const { campeonId } = req.params;
 
-    // Obtener premios del perro
-    const responsePremios = await fetch(`http://premios:4000/api/v2/premios/${id}`);
-    const premiosDelPerro = await responsePremios.json();
-    
-    const perroConPremios = {
-      ...perro,
-      premios: premiosDelPerro,
-    };
+  // Si campeonId contiene una lista de IDs separados por coma, dividimos la cadena en una matriz
+  const ids = campeonId.split(',');
 
-    return res.send(response(perroConPremios));
-  } catch (error) {
-    console.error(error);
-    return res.status(500).send("Error fetching data");
+  const premiosPorCampeon = await premios.find({
+    championId: { $in: ids }
+  });
+
+  if (!premiosPorCampeon || premiosPorCampeon.length === 0) {
+    return res.status(404).send(response(`No se encontró ningún registro con los IDs de campeón proporcionados: ${campeonId}`, true));
   }
-});
 
+  logger("Get by campeonId: Premio data");
+  return res.send(response(premiosPorCampeon));
+});
 
 
 module.exports = router;
