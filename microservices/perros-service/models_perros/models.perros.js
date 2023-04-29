@@ -57,5 +57,46 @@ findByNombre(dueno) {
 
   return perros;
 }
+
+async  buscarPremiosPorPerro(perro) {
+  try {
+    const responsePremios = await fetch(`http://premios:4000/api/v2/premios/${id}`);
+    const premiosEncontrados = await responsePremios.json();
+
+    const perroConPremios = {
+      perro: perro,
+      premios: premiosEncontrados,
+    };
+
+    return perroConPremios;
+  } catch (error) {
+    console.log(error);
+    throw new Error("Error fetching premios data");
+  }
 }
+
+async buscarPremiosPorNombrePerro(nombrePerro) {
+  const perrosEncontrados = perros.findByNombre(nombrePerro);
+  const promesasPremios = perrosEncontrados.map(async (perro) => {
+    try {
+      const response = await fetch(`http://premios:4000/api/v2/premios/categoria${categoria}`);
+      const premiosEncontrados = await response.json();
+      return premiosEncontrados;
+    } catch (error) {
+      console.log(error);
+      throw new Error("Error fetching premios data");
+    }
+  });
+  const premiosPorPerro = await Promise.all(promesasPremios);
+  return premiosPorPerro;
+}
+
+
+
+}
+
+
+
+
+
 module.exports = PerrosModel;

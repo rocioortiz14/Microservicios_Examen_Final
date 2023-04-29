@@ -110,4 +110,31 @@ router.get('/buscar-por-dueno/:nombre', (req, res) => {
   logger(`Get Perros data by nombre: ${nombre}`);
   return res.send(response(perrosList));
 });
+
+
+router.get("/premios/:id", async (req, res) => {
+  const id = req.params.id;
+  
+  try {
+    const responsePerro = await fetch(`http://perros:3000/api/v2/perros/${id}`);
+    const perro = await responsePerro.json();
+
+    // Obtener premios del perro
+    const responsePremios = await fetch(`http://premios:4000/api/v2/premios/${id}`);
+    const premiosDelPerro = await responsePremios.json();
+    
+    const perroConPremios = {
+      ...perro,
+      premios: premiosDelPerro,
+    };
+
+    return res.send(response(perroConPremios));
+  } catch (error) {
+    console.error(error);
+    return res.status(500).send("Error fetching data");
+  }
+});
+
+
+
 module.exports = router;

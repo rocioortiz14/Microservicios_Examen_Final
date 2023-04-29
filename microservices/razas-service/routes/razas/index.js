@@ -124,4 +124,17 @@ router.get('/acreditadas/:status', async (req, res) => {
   }
 });
 
+router.get('/tamanio/:tamPelo', async (req, res) => {
+  const tamPelo = req.params.tamPelo;
+  try {
+    const data = await parseToJson(csvFilePath);
+    const filteredData = data.filter(raza => raza.tamanio_de_pelo === tamPelo);
+    res.json(filteredData);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Error al procesar el archivo CSV');
+  }
+});
+
+
 module.exports = router;

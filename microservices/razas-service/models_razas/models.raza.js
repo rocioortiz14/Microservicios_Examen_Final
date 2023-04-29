@@ -59,6 +59,42 @@ async findByAcreditado(acreditado) {
   return razasFiltradas;
 }
 
+async findByTamanioDePelo(tamanio) {
+  const listadoRazas = await this.data;
+  const razasFiltradas = listadoRazas.filter(raza => raza.tamanio_de_pelo === tamanio);
+  return razasFiltradas;
+}
+// Función para buscar perros por tamaño de pelo
+async  findByTamanio_De_Pelo(tamanioPelo) {
+  const response = await fetch(`http://perros:3000/api/v2/perros/buscar-por-tamanio-de-pelo/${tamanioPelo}`);
+  const perros = await response.json();
+  return perros;
+}
+
+async  getPerroConPremios(id) {
+  try {
+    const responsePerro = await fetch(`http://perros:3000/api/v2/perros/${id}`);
+    const perro = await responsePerro.json();
+
+    // Obtener premios del perro
+    const responsePremios = await fetch(`http://premios:4000/api/v2/premios/${id}`);
+    const premiosDelPerro = await responsePremios.json();
+    
+    const perroConPremios = {
+      ...perro,
+      premios: premiosDelPerro,
+    };
+
+    return perroConPremios;
+  } catch (error) {
+    console.error(error);
+    throw new Error("Error fetching data");
+  }
+}
+
+
+
+
 }
 
 

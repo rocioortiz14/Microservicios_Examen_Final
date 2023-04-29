@@ -26,6 +26,7 @@ router.get("/", async (req, res) => {
   return res.send(response(listaPremios));
 });
 
+// Ruta para buscar un premio por su ID
 router.get("/:id", async (req, res) => {
   const { id } = req.params;
   const premioFound = await premios.findById(id);
@@ -42,21 +43,7 @@ router.get("/:id", async (req, res) => {
 
 
 
-// Ruta para buscar un premio por su ID
-router.get("/:id", (req, res) => {
-  const id = req.params.id;
-
-  const premio = premiosModel.findById(id);
-
-  if (premio) {
-    res.status(200).json(premio);
-  } else {
-    res.status(404).json({ message: "Premio no encontrado" });
-  }
-});
-
-
-// ruta para buscar un premio por su ide campeon 
+// ruta para buscar un premio por su id dee campeon 
 router.get("/campeon/:campeonId", async (req, res) => {
   const { campeonId } = req.params;
   const premiosPorCampeon = await premios.findByChampionId(campeonId);
@@ -215,6 +202,8 @@ router.get("/estrellas/:estrellas", async (req, res) => {
   logger(`Get by estrellas: ${estrellas} - Premio data`);
   return res.send(response(premiosFound));
 });
+
+
 
 
 module.exports = router;
