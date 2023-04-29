@@ -92,7 +92,7 @@ router.get("/anio/:inicio/:fin", async (req, res) => {
 });
 
 
-//Ruta para buscar por lugar ganado
+/*//Ruta para buscar por lugar ganado
 router.get("/lugar/:lugar", async (req, res) => {
   const { lugar } = req.params;
   const premiosFound = await premios.findByLugar(lugar);
@@ -120,7 +120,32 @@ router.get("/categoria/:categoria", async (req, res) => {
 
   logger("Get by categoria_ganada: Premio data");
   return res.send(response(premiosFound));
+});*/
+
+router.get("/lugar/:lugar", async (req, res) => {
+  const { lugar } = req.params;
+  const premiosFound = await premios.findByLugar(lugar);
+
+  if (premiosFound.length === 0) {
+    return res
+      .status(404)
+      .send(response(`No se encontró ningún registro con el lugar ${lugar}`, true));
+  }
+
+  const sum = premiosFound.reduce((acc, curr) => {
+    if (!isNaN(curr.monto)) {
+      return acc + curr.monto;
+    }
+    return acc;
+  }, 0);
+
+  const count = premiosFound.filter(premio => !isNaN(premio.monto)).length;
+  const average = count > 0 ? sum / count : 0;
+
+  logger("Get by lugar: Promedio del lugar según el lugar ganado");
+  return res.send(response(`El promedio del lugar según el lugar ${lugar} es de ${average}`));
 });
+
 
 //Ruta para buscar premio por pais de competencia
 router.get("/pais/:pais", async (req, res) => {
