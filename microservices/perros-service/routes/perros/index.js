@@ -72,7 +72,7 @@ router.get('/buscar/:tipo/:peso/:pais', (req, res) => {
     }
     return false;
   });
-    logger(`Get Perros data by pais: ${pais}`);
+    logger(`Get Perros data by pais: ${pais}, ${peso}`);
   return res.send(response(perrosList));
   
 });
